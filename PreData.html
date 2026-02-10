@@ -176,7 +176,7 @@
 
         <!-- Individual Teacher Reports -->
         <div class="flex items-center space-x-4 border-b border-gray-200 pb-2">
-            <h2 class="text-2xl font-bold text-slate-800">Individual Faculty Analysis (III-V)</h2>
+            <h2 class="text-2xl font-bold text-slate-800">Individual Faculty Analysis</h2>
             <span class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-xs font-bold" id="report-count">0 Reports Generated</span>
         </div>
         
@@ -543,7 +543,7 @@
             loaderEl.classList.remove('hidden');
 
             const context = `
-                You are a Senior Educational Consultant analyzing a dashboard of ${teachersData.length} teachers (Grades III-V).
+                You are a Senior Educational Consultant analyzing a dashboard of ${teachersData.length} teachers.
                 Here is the data summary:
                 ${JSON.stringify(teachersData.map(t => ({name: t.name, subject: t.subject, rating: t.rating, glows: t.glows, grows: t.grows, talkRatio: t.talk})))}
                 
@@ -741,4 +741,5 @@
 
     </script>
 </body>
+
 </html>
