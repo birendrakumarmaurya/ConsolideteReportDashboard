@@ -81,8 +81,8 @@ def parse_docx(file_stream, filename):
             talk_ratio = {"teacher": round(t_sum/count), "student": round(s_sum/count)}
             avg_student = talk_ratio['student']
 
-    # Rating
-    score = 3.5 + (len(glows) * 0.25) - (len(grows) * 0.15)
+    # Rating ----------------------------------------------------------- 3.5
+    score = 4 + (len(glows) * 0.25) - (len(grows) * 0.15)
     if avg_student >= 55: score += 0.2
     if avg_student <= 30: score -= 0.2
     rating = round(max(2.5, min(5.0, score)), 1)
@@ -176,3 +176,4 @@ if uploaded_files:
 
 elif not uploaded_files:
     st.info("Please upload .docx files to start.")
+
