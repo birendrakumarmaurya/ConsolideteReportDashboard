@@ -4,22 +4,20 @@ import json
 import re
 import random
 from docx import Document
-from io import BytesIO
+# No longer need BytesIO for the template since we read it from disk
 
-# --- CONFIGURATION & TEMPLATES ---
-# We will embed the HTML template string directly or read it if uploaded.
-# For simplicity in deployment, I'll assume you upload the HTML template 
-# or we use a fallback default if you don't want to upload it every time.
+# --- CONFIGURATION ---
+TEMPLATE_FILENAME = 'PreData.html'  # This file must exist in your GitHub repo
 
 st.set_page_config(page_title="Dashboard Generator", layout="wide")
 
 st.title("📊 Observation Dashboard Compiler")
 st.markdown("""
-Upload your **Consolidated Word Reports (.docx)** and the **HTML Template**. 
-The system will auto-detect the class block and generate the dashboard.
+Upload your **Consolidated Word Reports (.docx)**.
+The system will automatically use the standard template to generate your dashboard.
 """)
 
-# --- LOGIC (From your script) ---
+# --- LOGIC ---
 
 def get_full_text_from_docx(file_stream):
     doc = Document(file_stream)
@@ -110,67 +108,71 @@ def parse_docx(file_stream, filename):
 
 # --- UI SECTION ---
 
-col1, col2 = st.columns([1, 2])
+st.subheader("1. Upload Files")
+uploaded_files = st.file_uploader("Upload Word Reports (.docx)", type=['docx'], accept_multiple_files=True)
 
-with col1:
-    st.subheader("1. Upload Files")
-    uploaded_files = st.file_uploader("Upload Word Reports (.docx)", type=['docx'], accept_multiple_files=True)
-    template_file = st.file_uploader("Upload HTML Template (.html)", type=['html'])
-
-if uploaded_files and template_file:
-    with col2:
-        st.subheader("2. Processing")
-        if st.button("Generate Dashboard"):
-            with st.spinner("Analyzing reports..."):
-                teachers_data = []
-                for uploaded_file in uploaded_files:
-                    try:
-                        # Streamlit passes a BytesIO object, docx can read it directly
-                        data = parse_docx(uploaded_file, uploaded_file.name)
-                        teachers_data.append(data)
-                        st.success(f"Parsed: {data['name']} ({data['rating']} ★)")
-                    except Exception as e:
-                        st.error(f"Error parsing {uploaded_file.name}: {e}")
-                
-                # Processing Template
-                json_data = json.dumps(teachers_data, indent=4, ensure_ascii=False)
-                
-                # Read Template content
-                stringio = template_file.getvalue().decode("utf-8")
-                
-                # Inject Data
+if uploaded_files:
+    st.subheader("2. Processing")
+    if st.button("Generate Dashboard"):
+        
+        # 1. Check if Template Exists in Repo
+        if not os.path.exists(TEMPLATE_FILENAME):
+            st.error(f"⚠️ Template file '{TEMPLATE_FILENAME}' not found in the repository. Please add it to GitHub.")
+            st.stop()
+            
+        with st.spinner("Analyzing reports..."):
+            teachers_data = []
+            for uploaded_file in uploaded_files:
                 try:
-                    new_html = re.sub(
-                        r'const teachersData = \[.*?\];', 
-                        lambda m: f'const teachersData = {json_data};', 
-                        stringio, 
-                        flags=re.DOTALL
-                    )
-                    
-                    # Inject Summary Script (Total Count Update)
-                    summary_script = f"""
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {{
-                            const countEl = document.getElementById('totalCount') || document.querySelector('.shadow-sm h3');
-                            if(countEl) countEl.innerText = "{len(teachers_data)}";
-                        }});
-                    </script>
-                    </body>
-                    """
-                    new_html = new_html.replace('</body>', summary_script)
-                    
-                    # DOWNLOAD BUTTON
-                    st.subheader("3. Download")
-                    st.download_button(
-                        label="Download Dashboard HTML",
-                        data=new_html,
-                        file_name="Dashboard_Generated.html",
-                        mime="text/html"
-                    )
-                    
+                    data = parse_docx(uploaded_file, uploaded_file.name)
+                    teachers_data.append(data)
+                    st.success(f"Parsed: {data['name']} ({data['rating']} ★)")
                 except Exception as e:
-                    st.error(f"Error injecting data into HTML: {e}")
+                    st.error(f"Error parsing {uploaded_file.name}: {e}")
+            
+            # 2. Read Template from Disk (Repo)
+            try:
+                with open(TEMPLATE_FILENAME, 'r', encoding='utf-8') as f:
+                    template_content = f.read()
+            except Exception as e:
+                st.error(f"Error reading template file: {e}")
+                st.stop()
+
+            # 3. Inject Data
+            json_data = json.dumps(teachers_data, indent=4, ensure_ascii=False)
+            
+            try:
+                # Use lambda to safely inject JSON
+                new_html = re.sub(
+                    r'const teachersData = \[.*?\];', 
+                    lambda m: f'const teachersData = {json_data};', 
+                    template_content, 
+                    flags=re.DOTALL
+                )
+                
+                # Inject Summary Script (Total Count Update)
+                summary_script = f"""
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {{
+                        const countEl = document.getElementById('totalCount') || document.querySelector('.shadow-sm h3');
+                        if(countEl) countEl.innerText = "{len(teachers_data)}";
+                    }});
+                </script>
+                </body>
+                """
+                new_html = new_html.replace('</body>', summary_script)
+                
+                # DOWNLOAD BUTTON
+                st.subheader("3. Download")
+                st.download_button(
+                    label="Download Dashboard HTML",
+                    data=new_html,
+                    file_name="Dashboard_Generated.html",
+                    mime="text/html"
+                )
+                
+            except Exception as e:
+                st.error(f"Error injecting data into HTML: {e}")
 
 elif not uploaded_files:
-    with col2:
-        st.info("Please upload .docx files to start.")
+    st.info("Please upload .docx files to start.")
