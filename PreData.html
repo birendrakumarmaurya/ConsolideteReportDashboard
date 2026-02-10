@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructional Observation Dashboard</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Custom Styles */
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; } /* Slate-100 */
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+        .gradient-header { background: linear-gradient(120deg, #1e293b, #334155); } /* Slate-800 to Slate-700 */
+        .rating-star { color: #fbbf24; }
+        .chart-container { position: relative; height: 200px; width: 100%; }
+        .radar-container { position: relative; height: 250px; width: 100%; }
+        
+        /* AI Feature Styles */
+        .ai-gradient-text { background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .ai-button { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); transition: all 0.3s ease; cursor: pointer; }
+        .ai-button:hover { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3); transform: scale(1.02); }
+        
+        /* Loader Animation */
+        .loader { border: 2px solid #f3f3f3; border-radius: 50%; border-top: 2px solid #3b82f6; width: 16px; height: 16px; -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation -->
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="bg-white/10 p-2 rounded-lg">
+                    <i class="fas fa-graduation-cap text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-yellow-400 uppercase tracking-wide mb-1">Sunbeam School, Lahartara</h1>
+                    <h2 class="text-lg md:text-xl font-semibold tracking-tight text-white opacity-90">Instructional Observation Dashboard</h2>
+                    <p class="text-xs text-slate-300 uppercase tracking-wider font-medium mt-1">Junior School Faculty (I-XII)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="window.print()" class="hidden md:flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-medium border border-white/10">
+                    <i class="fas fa-print"></i>
+                    <span>Export Report</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        <!-- Executive Summary Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Summary Card 1 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-slate-600 card-hover relative overflow-hidden">
+                <div class="flex justify-between items-start z-10 relative">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Faculty</p>
+                        <h3 class="text-3xl font-bold text-gray-900 mt-2" id="summary-total">0</h3>
+                        <p class="text-xs text-gray-400 mt-1">Observations Recorded</p>
+                    </div>
+                    <div class="p-3 bg-slate-100 rounded-full text-slate-600">
+                        <i class="fas fa-chalkboard-teacher text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Card 2 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg. Teacher Talk</p>
+                        <h3 class="text-lg font-bold text-gray-900 mt-2" id="summary-talk">0%</h3>
+                        <p class="text-xs text-blue-600 mt-1 font-medium">Target: < 50%</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-full text-blue-600">
+                        <i class="fas fa-bullhorn text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Card 3 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Common Strength</p>
+                        <h3 class="text-lg font-bold text-gray-900 mt-2" id="summary-strength">-</h3>
+                        <p class="text-xs text-amber-600 mt-1 font-medium">Most frequent 'Glow'</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 rounded-full text-amber-600">
+                        <i class="fas fa-star text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Card 4 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg. Rating</p>
+                        <h3 class="text-3xl font-bold text-gray-900 mt-2" id="summary-rating">0<span class="text-lg text-gray-400">/5</span></h3>
+                        <p class="text-xs text-indigo-600 mt-1 font-medium">Overall Performance</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 rounded-full text-indigo-600">
+                        <i class="fas fa-award text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ✨ AI Strategic Insight Engine -->
+        <section class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/3">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2"><i class="fas fa-brain mr-2 text-indigo-600"></i>Strategic Insight Engine</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        Leverage AI to analyze your faculty data. Ask about depth of content, common trends, or specific pedagogical strategies used by this cohort.
+                    </p>
+                    <div class="flex flex-col gap-2">
+                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Suggested Queries:</p>
+                        <button onclick="askStrategicAI('What are the most common teaching strategies used in this group?')" class="text-left text-xs bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg text-slate-700 transition border border-slate-200">
+                            ✨ Analyze Common Strategies
+                        </button>
+                        <button onclick="askStrategicAI('Suggest one area of professional development based on the weaknesses.')" class="text-left text-xs bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg text-slate-700 transition border border-slate-200">
+                            ✨ Suggest PD Topics
+                        </button>
+                    </div>
+                </div>
+                <div class="md:w-2/3 flex flex-col">
+                    <div class="relative">
+                        <input type="text" id="strategicInput" placeholder="Ask a question about the faculty cohort..." class="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none shadow-sm">
+                        <button onclick="askStrategicAI()" class="absolute right-2 top-2 bg-slate-800 hover:bg-slate-700 text-white p-1.5 rounded-lg transition shadow-sm w-8 h-8 flex items-center justify-center">
+                            <i class="fas fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="strategicOutput" class="mt-4 bg-slate-50 rounded-xl border border-slate-200 p-5 flex-grow min-h-[120px] text-sm text-slate-700 shadow-sm overflow-y-auto hidden">
+                        <!-- AI Response will appear here -->
+                    </div>
+                    <div id="strategicLoader" class="hidden mt-4 text-center py-4">
+                        <div class="loader mr-2"></div> <span class="text-xs text-indigo-600 font-medium">Analyzing cohort data...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Global Analytics -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-6 border-b pb-2">
+                    <i class="fas fa-chart-bar mr-2 text-indigo-500"></i>Aggregate Strengths Frequency
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="strengthsChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-6 border-b pb-2">
+                    <i class="fas fa-chart-area mr-2 text-blue-500"></i>Talk Ratio Distribution (Teacher vs Student)
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="talkRatioScatter"></canvas>
+                </div>
+                <p class="text-xs text-center text-gray-400 mt-2">Target: 40-50% Student Talk</p>
+            </div>
+        </section>
+
+        <!-- Individual Teacher Reports -->
+        <div class="flex items-center space-x-4 border-b border-gray-200 pb-2">
+            <h2 class="text-2xl font-bold text-slate-800">Individual Faculty Analysis (III-V)</h2>
+            <span class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-xs font-bold" id="report-count">0 Reports Generated</span>
+        </div>
+        
+        <div class="space-y-12" id="teacherCardsContainer">
+            <!-- Cards will be populated here by JS -->
+        </div>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-12 mt-12 border-t border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm font-medium">Developed by Birendra Kumar as Demo</p>
+            <p class="text-xs mt-2 opacity-60">Confidential Internal Document • Jan 2026 Cycle</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA SOURCE ---
+        const teachersData = [
+            // --- NEW ENTRY: MS. VARSHA ---
+            {
+                id: "varsha_junior", name: "Ms. Varsha", subject: "GK / Computer", classes: "Class 3B, 3D, 5D", initials: "VA", color: "cyan", rating: 4.6,
+                overview: "Demonstrated a well-balanced, student-engaging, and concept-oriented instructional approach. Lessons on Rabindranath Tagore (GK) and Scratch/Algorithms (Computer) focused on revision and application.",
+                glows: ["Balanced Interaction", "Digital Tool Use (IFP, CYL, Scratch)", "Clear Structure", "High Engagement"],
+                grows: ["Independent Practice", "Visual Organisers", "Peer Discussion"],
+                plan: "Pair-based activities & visual anchors.",
+                competency: [5, 5, 4, 4, 5], talk: { teacher: 50, student: 50 } 
+            },
+            // --- EXISTING JUNIOR SCHOOL TEACHERS (Classes III-V) ---
+            {
+                id: "raksha_rajdev", name: "Raksha Rajdev", subject: "English (Lit/Grammar)", classes: "Class IV A, V B", initials: "RR", color: "purple", rating: 4.6,
+                overview: "Demonstrated strong instructional clarity and classroom control in 'Friends' (Poem) and Onomatopoeia.",
+                glows: ["Textual Accuracy", "Classroom Management", "Guided Questioning"],
+                grows: ["Independent Writing Time", "Extended Wait Time"],
+                plan: "Independent writing tasks before discussion.",
+                competency: [5, 5, 4, 4, 5], talk: { teacher: 62, student: 38 }
+            },
+            {
+                id: "anuradha_khetan", name: "Anuradha Khetan", subject: "Science", classes: "Class V", initials: "AK", color: "teal", rating: 4.7,
+                overview: "Consistent student-centered pedagogy. Inquiry-driven lessons aligned with objectives.",
+                glows: ["Hands-on Activities", "Purposeful Questioning", "Positive Reinforcement"],
+                grows: ["Structured Worksheets", "More Visual Aids"],
+                plan: "Home-based experiments & structured recording sheets.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 55, student: 45 }
+            },
+            {
+                id: "ruchi_ladha", name: "Ruchi Ladha", subject: "Hindi / Sanskrit", classes: "Class III A, IV A, V D", initials: "RL", color: "rose", rating: 4.8,
+                overview: "Highly student-centric, language-rich approach. Exceptionally high student talk.",
+                glows: ["High Student Talk (70%)", "Expressive Skills", "Peer Learning"],
+                grows: ["Structured Expressive Reading", "Written Consolidation"],
+                plan: "Differentiated reading tasks & written reflection.",
+                competency: [5, 4, 5, 5, 5], talk: { teacher: 30, student: 70 }
+            },
+            {
+                id: "sakshi_kapoor", name: "Sakshi Kapoor", subject: "Mathematics", classes: "Class IV A", initials: "SK", color: "blue", rating: 4.4,
+                overview: "Concept-driven approach to Leap Year & Calendar. Strong conceptual explanation.",
+                glows: ["Conceptual Clarity", "Visual Learning Aids", "Misconception Correction"],
+                grows: ["Student-led Demonstrations", "Positive Narration"],
+                plan: "Peer-led knuckle counting activities.",
+                competency: [5, 5, 3, 4, 5], talk: { teacher: 75, student: 25 }
+            },
+            {
+                id: "shalini_dabade", name: "Shalini Dabade", subject: "Social Science", classes: "Class III C, IV C", initials: "SD", color: "orange", rating: 4.7,
+                overview: "Discussion-rich pedagogy with experiential hooks (Rights/Duties).",
+                glows: ["Student Voice", "Experiential Hooks", "Inclusive Climate"],
+                grows: ["Visual Organisers", "Closure Routines"],
+                plan: "60-second recap routine & anchor charts.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 48, student: 52 }
+            },
+            {
+                id: "suparbha_choudhuri", name: "Suparbha Choudhuri", subject: "English", classes: "Class III B, IV B", initials: "SC", color: "indigo", rating: 4.7,
+                overview: "Engaging, student-centred poetry instruction. Integrated emotional connection.",
+                glows: ["Student Voice", "Empathetic Climate", "Audio Integration"],
+                grows: ["Peer Feedback", "Written Reflections"],
+                plan: "Think-Pair-Share & peer appreciation checklists.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 45, student: 55 }
+            },
+            {
+                id: "debika_laha", name: "Debika Laha", subject: "Mathematics", classes: "Class III", initials: "DL", color: "blue", rating: 4.7,
+                overview: "Strong focus on revision and conceptual reinforcement in Time and Measurement. Learner-centered and well-paced environment.",
+                glows: ["Concept maps & board work", "Correction of misconceptions", "Warm/Patient Tone"],
+                grows: ["Peer-led explanations", "Timed practice for fluency", "Scaffolding unit conversions"],
+                plan: "Peer interaction & fluency-building tasks.",
+                competency: [5, 5, 4, 4, 5], talk: { teacher: 45, student: 55 }
+            },
+            {
+                id: "devnil_chatterjee", name: "Devnil Chatterjee", subject: "Computer Science", classes: "Class III-IV", initials: "DC", color: "indigo", rating: 4.9,
+                overview: "Exemplary student-centred pedagogy using Scratch and practical lab browsing. High engagement through hands-on exploration.",
+                glows: ["Experiential learning", "High Student Talk", "Digital Tool Integration", "Well-structured Questioning"],
+                grows: ["Formalize Peer-Mentors (Tech Buddies)", "Extend advanced navigation", "Structured Reflection"],
+                plan: "Tech Buddies program & digital goal setting.",
+                competency: [5, 5, 5, 5, 5], talk: { teacher: 35, student: 65 }
+            },
+            {
+                id: "divya_sharma", name: "Divya Sharma", subject: "Science / Maths", classes: "Class III-IV", initials: "DS", color: "teal", rating: 4.7,
+                overview: "Strong pedagogical command across online/offline modes. Emotionally responsive activity-based learning (Money, Rotation).",
+                glows: ["Student Voice", "Virtual Class Management", "Emotional Connect", "Balanced Integration"],
+                grows: ["Breakout rooms (Online)", "Transition Optimization", "Visual Scaffolds"],
+                plan: "Breakout rooms & visual aids.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 45, student: 55 }
+            },
+            {
+                id: "manjari_singh", name: "Manjari Singh", subject: "Hindi", classes: "Class III A", initials: "MS", color: "rose", rating: 4.8,
+                overview: "Highly student-centric lesson on 'Aranya ka Sankoch'. Strong integration of language learning with life skills (SEL).",
+                glows: ["SEL Integration", "Student Voice", "Warm Tone", "Reasoning Questions"],
+                grows: ["Structured thinking time", "Turn-taking strategies", "Role-play activities"],
+                plan: "Role-play & structured thinking time.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 40, student: 60 }
+            },
+            {
+                id: "mridul_chaudhary", name: "Mridul Chaudhary", subject: "Art & Craft", classes: "Class III B", initials: "MC", color: "orange", rating: 4.5,
+                overview: "Effective classroom management and structured instruction on Colouring and Shading. Strong focus on foundational skills.",
+                glows: ["Strong Guidance", "Clear Routines", "Encouraging Tone", "Resource Use"],
+                grows: ["Open-ended questioning", "Peer-checking", "Discussion time"],
+                plan: "Peer-review & reflection time.",
+                competency: [5, 5, 3, 4, 5], talk: { teacher: 70, student: 30 }
+            },
+            {
+                id: "namrata_singh", name: "Namrata Singh", subject: "Mathematics", classes: "Class III A", initials: "NS", color: "blue", rating: 4.6,
+                overview: "Structured and methodical approach to Time & Calendar. Effective use of Show-me boards for assessment.",
+                glows: ["Clear Explanations", "Show-me Board Activity", "Classroom Control", "Logical Sequencing"],
+                grows: ["Structured Peer Discussion", "Reduce material handling time", "Exit Tickets"],
+                plan: "Pre-class routines & Exit tickets.",
+                competency: [5, 5, 4, 4, 5], talk: { teacher: 60, student: 40 }
+            },
+            {
+                id: "neha_singh", name: "Neha Singh", subject: "Social Studies", classes: "Class V B", initials: "NeS", color: "emerald", rating: 4.8,
+                overview: "Discussion-based pedagogy on Nationalism & Freedom Struggle. Volunteer teaching strategy reflected strong learner-centricity.",
+                glows: ["Volunteer Teaching", "Critical Thinking", "Motivating Tone", "Management"],
+                grows: ["Structured Peer Discussion", "Encourage Quiet Students", "Written Exit Reflections"],
+                plan: "Peer discussion structures & exit reflections.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 40, student: 60 }
+            },
+            {
+                id: "pankaj_singh", name: "Pankaj Singh", subject: "Hindi", classes: "Class III & V", initials: "PS", color: "rose", rating: 4.7,
+                overview: "Value-based approach focusing on moral values and language enrichment through 'Aranya ka Sankoch' and 'Muhavare'.",
+                glows: ["Student Expression", "Moral Value Integration", "Encouraging Tone"],
+                grows: ["Equal Participation", "Independent Written Expression", "HOTS Questions"],
+                plan: "Writing time & HOTS integration.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 40, student: 60 }
+            },
+            {
+                id: "pooja_verma", name: "Pooja Verma", subject: "English", classes: "Class V C", initials: "PV", color: "purple", rating: 4.8,
+                overview: "Creative, student-centred approach to teaching English through poetry. Lesson on limericks encouraged imagination.",
+                glows: ["Engagement through Poetry", "Creative Questioning", "Warm Tone", "Facilitation"],
+                grows: ["Model Examples before writing", "Peer Sharing Time", "Differentiated Scaffolding"],
+                plan: "Modeling & Peer sharing.",
+                competency: [5, 5, 5, 4, 5], talk: { teacher: 45, student: 55 }
+            }
+        ];
+
+        // --- CORE LOGIC ---
+
+        // 1. Calculate Summary Statistics
+        function updateSummary() {
+            if (teachersData.length === 0) return;
+
+            // Total Count
+            document.getElementById('summary-total').innerText = teachersData.length;
+            document.getElementById('report-count').innerText = `${teachersData.length} Reports Generated`;
+
+            // Avg Rating
+            const avgRating = (teachersData.reduce((acc, t) => acc + t.rating, 0) / teachersData.length).toFixed(1);
+            document.getElementById('summary-rating').innerHTML = `${avgRating}<span class="text-lg text-gray-400">/5</span>`;
+
+            // Avg Talk Ratio
+            const avgTalk = Math.round(teachersData.reduce((acc, t) => acc + t.talk.teacher, 0) / teachersData.length);
+            document.getElementById('summary-talk').innerText = `${avgTalk}%`;
+
+            // Find Common Strength (Simple Frequency)
+            const allGlows = teachersData.flatMap(t => t.glows);
+            if (allGlows.length > 0) {
+                const frequency = {};
+                let maxFreq = 0;
+                let mostCommon = "-";
+                
+                allGlows.forEach(g => {
+                    const term = g.split('(')[0].trim(); 
+                    frequency[term] = (frequency[term] || 0) + 1;
+                    if (frequency[term] > maxFreq) {
+                        maxFreq = frequency[term];
+                        mostCommon = term;
+                    }
+                });
+                document.getElementById('summary-strength').innerText = mostCommon;
+            }
+        }
+
+        // 2. Render Functions
+        function renderCards() {
+            const container = document.getElementById('teacherCardsContainer');
+            if (teachersData.length === 0) return;
+
+            container.innerHTML = teachersData.map(t => `
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
+                    <!-- Header -->
+                    <div class="bg-slate-100 px-8 py-5 flex flex-col md:flex-row justify-between items-center border-b border-slate-200">
+                        <div class="flex items-center space-x-5">
+                            <div class="h-14 w-14 rounded-full bg-${t.color}-600 flex items-center justify-center text-white font-bold text-xl shadow-md">${t.initials}</div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800">${t.name}</h3>
+                                <p class="text-sm text-slate-500 font-medium">${t.subject} • ${t.classes}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end mt-4 md:mt-0">
+                            <div class="flex text-yellow-400 text-lg mb-1">
+                                ${Array(5).fill(0).map((_, i) => 
+                                    i < Math.floor(t.rating) ? '<i class="fas fa-star"></i>' : 
+                                    (i < t.rating ? '<i class="fas fa-star-half-alt"></i>' : '<i class="far fa-star"></i>')
+                                ).join('')}
+                            </div>
+                            <span class="text-sm font-bold text-slate-600 bg-white px-3 py-1 rounded-full border shadow-sm">Rating: ${t.rating}/5</span>
+                        </div>
+                    </div>
+
+                    <!-- Content Grid -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Text Analysis -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Instructional Overview</h4>
+                                <p class="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-200">${t.overview}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                    <h5 class="text-emerald-700 font-bold text-sm mb-3 flex items-center"><i class="fas fa-check-circle mr-2"></i>Glows (Strengths)</h5>
+                                    <ul class="space-y-2 text-xs text-slate-700">
+                                        ${t.glows.map(g => `<li class="flex items-start"><span class="mr-2 text-emerald-500">•</span>${g}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                                    <h5 class="text-amber-700 font-bold text-sm mb-3 flex items-center"><i class="fas fa-arrow-up mr-2"></i>Grows (Focus Areas)</h5>
+                                    <ul class="space-y-2 text-xs text-slate-700">
+                                        ${t.grows.map(g => `<li class="flex items-start"><span class="mr-2 text-amber-500">•</span>${g}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+
+                             <!-- ✨ AI Strategic Recommendations Section -->
+                            <div class="bg-gradient-to-r from-slate-700 to-slate-800 p-0.5 rounded-xl shadow-sm relative overflow-hidden group">
+                                <div class="bg-white rounded-[10px] p-4 relative z-10">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h5 class="ai-gradient-text font-bold text-sm flex items-center">
+                                            <i class="fas fa-magic mr-2 text-indigo-500"></i>Strategic Recommendations
+                                        </h5>
+                                        <button onclick="generateMicroStrategy('${t.id}')" class="ai-button text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-md flex items-center">
+                                            ✨ Generate Strategy
+                                        </button>
+                                    </div>
+                                    <div id="ai-output-${t.id}" class="hidden text-xs text-slate-600 italic bg-slate-50 p-3 rounded-lg border border-slate-100 mt-2">
+                                        <!-- AI Tip will load here -->
+                                    </div>
+                                    <div id="ai-loader-${t.id}" class="hidden text-center py-2">
+                                        <div class="loader"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visual Analytics -->
+                        <div class="space-y-6">
+                             <div class="bg-white p-2 rounded-lg">
+                                <h5 class="text-center text-xs font-bold text-slate-400 mb-2">Competency Profile</h5>
+                                <div class="radar-container">
+                                    <canvas id="radar-${t.id}"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-white p-2 rounded-lg">
+                                <h5 class="text-center text-xs font-bold text-slate-400 mb-2">Talk Ratio</h5>
+                                <div class="chart-container" style="height: 150px;">
+                                    <canvas id="talk-${t.id}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Initialize Individual Charts
+            teachersData.forEach(t => {
+                createRadar(`radar-${t.id}`, t.competency, getChartColor(t.color));
+                createDonut(`talk-${t.id}`, t.talk.teacher, t.talk.student);
+            });
+        }
+
+        function getChartColor(colorName) {
+            const colors = { 
+                orange: '#f97316', indigo: '#4f46e5', blue: '#2563eb', emerald: '#10b981', 
+                violet: '#7c3aed', rose: '#e11d48', green: '#16a34a', teal: '#0d9488',
+                yellow: '#ca8a04', purple: '#9333ea', cyan: '#06b6d4'
+            };
+            return colors[colorName] || '#64748b';
+        }
+
+        // --- GEMINI API INTEGRATION ---
+        const apiKey = "AIzaSyDESSNMsvQHP_isahNrEvWVqrGMbjL5Tnw"; // Integrated User Key
+
+        function getApiKey() {
+            if (apiKey) return apiKey; 
+            const stored = localStorage.getItem('gemini_api_key');
+            if (stored) return stored; 
+            return null;
+        }
+
+        async function callGemini(prompt) {
+            const key = getApiKey();
+            if (!key) {
+                // Return a specific null indicator to handle UI
+                return null;
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 400 || response.status === 403) {
+                         // Only clear local storage if it was a local key.
+                         if (!apiKey) localStorage.removeItem('gemini_api_key');
+                         return "Error: Invalid API Key.";
+                    }
+                    return "Error connecting to AI service.";
+                }
+
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                return "Error connecting to AI service. Please try again.";
+            }
+        }
+
+        // Feature 1: Strategic Insight Engine (Global)
+        async function askStrategicAI(presetQuery = null) {
+            const inputEl = document.getElementById('strategicInput');
+            const outputEl = document.getElementById('strategicOutput');
+            const loaderEl = document.getElementById('strategicLoader');
+            
+            // Check for Key First
+            if (!getApiKey()) {
+                outputEl.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-center p-4">
+                        <p class="text-sm text-slate-500 mb-2">AI features require a Gemini API Key.</p>
+                        <p class="text-xs text-red-500">API Key not found or invalid.</p>
+                    </div>
+                `;
+                outputEl.classList.remove('hidden');
+                return;
+            }
+
+            const query = presetQuery || inputEl.value;
+            if (!query) return;
+            if (presetQuery) inputEl.value = presetQuery;
+
+            outputEl.classList.add('hidden');
+            loaderEl.classList.remove('hidden');
+
+            const context = `
+                You are a Senior Educational Consultant analyzing a dashboard of ${teachersData.length} teachers (Grades III-V).
+                Here is the data summary:
+                ${JSON.stringify(teachersData.map(t => ({name: t.name, subject: t.subject, rating: t.rating, glows: t.glows, grows: t.grows, talkRatio: t.talk})))}
+                
+                Question: ${query}
+                
+                Provide a strategic, high-level answer (max 3-4 sentences). Focus on actionable pedagogy and patterns suitable for junior school.
+            `;
+
+            const response = await callGemini(context);
+            
+            loaderEl.classList.add('hidden');
+            outputEl.classList.remove('hidden');
+            if (response) {
+                if (response.startsWith("Error")) {
+                    outputEl.innerHTML = `<span class="text-red-500 font-bold">${response}</span>`;
+                } else {
+                    outputEl.innerHTML = `<span class="font-bold text-indigo-600">AI Insight:</span> ${response.replace(/\*\*/g, '<b>').replace(/\*/g, '')}`;
+                }
+            }
+        }
+
+        // Feature 2: Pedagogy Co-Pilot (Individual)
+        async function generateMicroStrategy(teacherId) {
+            const outputEl = document.getElementById(`ai-output-${teacherId}`);
+            const loaderEl = document.getElementById(`ai-loader-${teacherId}`);
+
+            // Check for Key First
+            if (!getApiKey()) {
+                outputEl.innerHTML = `
+                   <span class="text-red-500 text-xs">API Key Missing</span>
+                `;
+                outputEl.classList.remove('hidden');
+                return;
+            }
+
+            const teacher = teachersData.find(t => t.id === teacherId);
+
+            outputEl.classList.add('hidden');
+            loaderEl.classList.remove('hidden');
+
+            const prompt = `
+                Act as an expert Instructional Coach for Junior School (Grades 3-5).
+                Teacher: ${teacher.name} (${teacher.subject}).
+                Strengths: ${teacher.glows.join(', ')}.
+                Weaknesses: ${teacher.grows.join(', ')}.
+                
+                Generate ONE specific, creative, and low-prep "Micro-Strategy" (classroom activity or technique) 
+                that leverages their strength to fix a weakness. 
+                Keep it under 40 words.
+            `;
+
+            const response = await callGemini(prompt);
+
+            loaderEl.classList.add('hidden');
+            outputEl.classList.remove('hidden');
+            if (response) {
+                 if (response.startsWith("Error")) {
+                    outputEl.innerHTML = `<span class="text-red-500 font-bold">${response}</span>`;
+                } else {
+                    outputEl.innerHTML = `<strong class="text-indigo-600">💡 Strategy:</strong> ${response}`;
+                }
+            }
+        }
+
+
+        // --- CHART HELPERS & INITIALIZATION ---
+        function createRadar(canvasId, dataValues, color) {
+            new Chart(document.getElementById(canvasId), {
+                type: 'radar',
+                data: {
+                    labels: ['Subject Knowledge', 'Delivery', 'Student Interaction', 'Assessment', 'Classroom Mgmt'],
+                    datasets: [{
+                        label: 'Competency',
+                        data: dataValues,
+                        fill: true,
+                        backgroundColor: color + '33',
+                        borderColor: color,
+                        pointBackgroundColor: color,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: color
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDonut(canvasId, teacherTalk, studentTalk) {
+            new Chart(document.getElementById(canvasId), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Teacher Talk', 'Student Talk'],
+                    datasets: [{
+                        data: [teacherTalk, studentTalk],
+                        backgroundColor: ['#64748b', '#3b82f6'], 
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // --- GLOBAL CHART GENERATION (DYNAMIC) ---
+        function initGlobalCharts() {
+            if (teachersData.length === 0) return;
+
+            // 1. Talk Ratio Scatter (Bar)
+            const talkLabels = teachersData.map(t => t.initials);
+            const talkData = teachersData.map(t => t.talk.teacher);
+            const talkColors = teachersData.map(t => getChartColor(t.color));
+
+            new Chart(document.getElementById('talkRatioScatter'), {
+                type: 'bar',
+                data: {
+                    labels: talkLabels,
+                    datasets: [{
+                        label: 'Teacher Talk %',
+                        data: talkData,
+                        backgroundColor: talkColors,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100, title: {display: true, text: 'Teacher Talk %'} } }
+                }
+            });
+
+            // 2. Strengths Chart (Aggregated Frequency)
+            // Aggregate keywords from "Glows"
+            const strengthMap = {};
+            teachersData.forEach(t => {
+                t.glows.forEach(glow => {
+                    // Simple cleaning: take the first 1-2 words or split by parenthesis
+                    let key = glow.split('(')[0].trim();
+                    if(key.length > 20) key = key.substring(0, 20) + "..."; // Truncate long strings
+                    strengthMap[key] = (strengthMap[key] || 0) + 1;
+                });
+            });
+
+            // Sort and take top 8
+            const sortedStrengths = Object.entries(strengthMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            new Chart(document.getElementById('strengthsChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedStrengths.map(s => s[0]),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: sortedStrengths.map(s => s[1]),
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: {stepSize: 1} } }
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSummary();
+            renderCards();
+            initGlobalCharts();
+        });
+
+    </script>
+</body>
+</html>
